@@ -8,6 +8,61 @@
 #include <algorithm>
 #include <iomanip>
 
+
+#define ASSERT_TRUE(expression) \
+		assert_true((expression), __func__)
+
+#define ASSERT_FALSE(expression) \
+		assert_false((expression), __func__)
+
+#define ASSERT_EQUALS(lhs, rhs) \
+		assert_equals((lhs), (rhs), __func__)
+
+#define EXCEPT_EXCEPTION(code, exception)										   \
+		try {																	   \
+			code																   \
+			std::cerr << "[" << __func__ << "] - " << "Test failed" << std::endl;  \
+		}																		   \
+		catch(const exception&){												   \
+			std::cout << "[" << __func__ << "] - " << "Test passed" << std::endl;  \
+}																				   \
+
+
+void assert_true(bool expression, std::string& test_name) {
+	if (expression)
+	{
+		std::cout << "[" << test_name << "] - " << "Test passed" << std::endl;
+	}
+	else
+	{
+		std::cout << "[" << test_name << "] - " << "Test failed" << std::endl;
+	}
+}
+
+void assert_false(bool expression, std::string& test_name) {
+	if (!expression)
+	{
+		std::cout << "[" << test_name << "] - " << "Test passed" << std::endl;
+	}
+	else
+	{
+		std::cout << "[" << test_name << "] - " << "Test failed" << std::endl;
+	}
+}
+
+template<typename T>
+void assert_equals(T lhs, T rhs, const std::string& test_name) {
+
+	if (lhs == rhs)
+	{
+		std::cout << "[" << test_name << "] - " << "Test passed" << std::endl;
+	}
+	else
+	{
+		std::cerr << "[" << test_name << "] - " << "Test failed" << std::endl;
+	}
+}
+
 struct Person {
 	std::string lastName;
 	std::string name;
@@ -65,7 +120,7 @@ std::ostream& operator<<(std::ostream& out, const PhoneNumber& phoneNumber) {
 class PhoneBook {
 private:
 	std::vector<std::pair<Person, PhoneNumber>> book;
-public: 
+public:
 	PhoneBook(std::ifstream& inf) {
 		std::string str;
 		std::string temp;
@@ -108,7 +163,7 @@ public:
 			book.push_back(std::make_pair(person, phoneNumber));
 
 		}
-		
+
 	}
 
 	void SortByName() {
@@ -123,6 +178,11 @@ public:
 		std::vector<std::pair<Person, PhoneNumber>>::iterator it;
 		std::tuple<std::string, PhoneNumber> temp_tuple;
 
+		if (lastName.empty())
+		{
+			throw std::invalid_argument("lastName is empty");
+		}
+
 		int sum = 0;
 		PhoneNumber phoneNumber;
 
@@ -136,13 +196,13 @@ public:
 		}
 
 		switch (sum) {
-		case 0: 
+		case 0:
 			temp_tuple = std::make_tuple("not found", phoneNumber);
 			break;
 		case 1:
 			temp_tuple = std::make_tuple("", phoneNumber);
 			break;
-		default: 
+		default:
 			temp_tuple = std::make_tuple("found more than 1", phoneNumber);
 			break;
 		}
@@ -152,6 +212,12 @@ public:
 
 	void ChangePhoneNumber(Person person, PhoneNumber newPhoneNumber) {
 		std::vector<std::pair<Person, PhoneNumber>>::iterator it;
+
+		if (person.name.empty() || person.lastName.empty())
+		{
+			throw std::invalid_argument("Person data is empty");
+		}
+
 		for (it = book.begin(); it != book.end(); it++)
 		{
 			if (it->first == person)
@@ -176,7 +242,14 @@ std::ostream& operator<<(std::ostream& out, PhoneBook& phoneBook) {
 	return out;
 }
 
+void test_getPhoneNumber_empty_data(PhoneBook& book) {
+	EXCEPT_EXCEPTION({ book.GetPhoneNumber(""); }, std::invalid_argument);
+}
 
+void test_ChangePhoneNumber_empty_data(PhoneBook& book) {
+	EXCEPT_EXCEPTION({ book.ChangePhoneNumber(Person{ "Kotov", "", std::nullopt}, PhoneNumber{ 7, 123, "15344458", std::nullopt }); }, std::invalid_argument);
+	EXCEPT_EXCEPTION({ book.ChangePhoneNumber(Person{ "", "Margarita", std::nullopt}, PhoneNumber{ 7, 123, "15344458", std::nullopt }); }, std::invalid_argument);
+}
 
 int main()
 {
@@ -213,6 +286,9 @@ int main()
 	book.ChangePhoneNumber(Person{ "Kotov", "Vasilii", "Eliseevich" }, PhoneNumber{ 7, 123, "15344458", std::nullopt });
 	book.ChangePhoneNumber(Person{ "Mironova", "Margarita", "Vladimirovna" }, PhoneNumber{ 16, 465, "9155448", 13 });
 	std::cout << book;
+
+	test_getPhoneNumber_empty_data(book);
+	test_ChangePhoneNumber_empty_data(book);
+
 	return 0;
 }
-
