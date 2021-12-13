@@ -1,0 +1,19 @@
+syntax="proto3";
+
+package myspace;
+
+message Fullname {
+	string name = 1;
+	string lastName = 2;
+	optional string patronymic = 3;
+}
+
+message Student {
+	Fullname fullname = 1;
+	repeated int32 marks = 2;
+	float average = 3;
+}
+
+message StudentGroup {
+	repeated Student students = 1;
+}
